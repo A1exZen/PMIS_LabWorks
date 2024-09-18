@@ -77,8 +77,6 @@ fun Main() {
         ) {
             composable(NavRoutes.Home.route) { Home() }
             composable(NavRoutes.Lists.route) { Lists() }
-//            composable(NavRoutes.Contacts.route) { Contacts() }
-//            composable(NavRoutes.About.route) { About() }
         }
         BottomNavigationBar(navController = navController)
     }
