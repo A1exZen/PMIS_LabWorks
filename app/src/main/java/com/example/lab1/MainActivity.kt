@@ -5,22 +5,33 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring.StiffnessHigh
+import androidx.compose.animation.core.Spring.StiffnessMedium
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Face
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -33,6 +44,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,10 +55,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.lab1.ui.theme.Lab1Theme
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.Navigator
@@ -60,23 +75,26 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Main()
+            Lab1Theme {
+                Main()
+            }
         }
     }
-
 }
 
+@Preview
 @Composable
 fun Main() {
     val navController = rememberNavController()
-    Column(Modifier.padding(8.dp)) {
+    Column(modifier = Modifier.background(Color(0xFFA9D3FA))) {
         NavHost(
             navController,
             startDestination = NavRoutes.Home.route,
             modifier = Modifier.weight(1f)
         ) {
             composable(NavRoutes.Home.route) { Home() }
-            composable(NavRoutes.Lists.route) { Lists() }
+            composable(NavRoutes.Patients.route) { Patients() }
+            composable(NavRoutes.AnimateImg.route) { AnimateImg() }
         }
         BottomNavigationBar(navController = navController)
     }
@@ -95,8 +113,7 @@ fun BottomNavigationBar(navController: NavController) {
                     navController.navigate(navItem.route) {
                         popUpTo(navController.graph.findStartDestination().id)
                         { saveState = true }
-                        launchSingleTop =
-                            true // предотращение записи в стек навигации при переходе к самому себе
+                        launchSingleTop = true // предотращение записи в стек навигации при переходе к самому себе
                         restoreState = true
                     }
                 },
@@ -114,6 +131,11 @@ fun BottomNavigationBar(navController: NavController) {
     }
 }
 
+data class BarItem(
+    val title: String,
+    val image: ImageVector,
+    val route: String
+)
 object NavBarItems {
     val BarItems = listOf(
         BarItem(
@@ -122,84 +144,19 @@ object NavBarItems {
             route = "home"
         ),
         BarItem(
-            title = "Lists",
-            image = Icons.Filled.Menu,
-            route = "lists"
+            title = "Patients",
+            image = Icons.Filled.AccountCircle,
+            route = "patients"
+        ),
+        BarItem(
+            title = "Animate Img",
+            image = Icons.Filled.Star,
+            route = "animate-img"
         ),
     )
 }
-
-data class BarItem(
-    val title: String,
-    val image: ImageVector,
-    val route: String
-)
-
-@Composable
-fun Home() {
-    var text by rememberSaveable { mutableStateOf("") }
-    val initialFullName = stringResource(id = R.string.full_name)
-    var fullName by rememberSaveable { mutableStateOf(initialFullName) }
-//    Text("Home Page", fontSize = 30.sp)
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFA9D3FA)),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        item {
-            Text(
-                text = "$fullName",
-                modifier = Modifier.padding(16.dp),
-                fontSize = 35.sp,
-                textAlign = TextAlign.Center,
-                lineHeight = 40.sp
-            )
-        }
-        item {
-            Image(
-                painter = painterResource(id = R.drawable.android_studio_logo),
-                modifier = Modifier.height(200.dp),
-                contentDescription = "Android Image"
-            )
-        }
-        item {
-            TextField(
-                value = text,
-                onValueChange = { text = it },
-                label = { Text(text = "Введите имя:") },
-                placeholder = { Text(text = "Иванов И. И.") },
-                modifier = Modifier
-                    .padding(2.dp, 50.dp, 2.dp, 20.dp)
-                    .fillMaxWidth()
-            )
-        }
-        item {
-            Row(
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(0.dp, 0.dp, 0.dp, 20.dp)
-            ) {
-                Button(onClick = { fullName = text }, shape = CutCornerShape(10)) {
-                    Text("Ввод")
-                }
-                FilledTonalButton(onClick = { text = "" }, shape = CutCornerShape(10)) {
-                    Text("Очистить")
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun Lists() {
-    Text("Lists Page", fontSize = 30.sp)
-}
-
 sealed class NavRoutes(val route: String) {
     object Home : NavRoutes("home")
-
-    //    object Contacts : NavRoutes("contacts")
-    object Lists : NavRoutes("lists")
+    object Patients : NavRoutes("patients")
+    object AnimateImg : NavRoutes("animate-img")
 }
